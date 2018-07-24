@@ -24,7 +24,7 @@ console.log('open URI:',oauth2Client.generateAuthUrl({
 }))
 
 //
-// Google API create cal event
+/////////////////////////// Google API create cal event///////////////////////////
 //
 function makeCalendarAPICall(token) {
   const oauth2Client = new google.auth.OAuth2(
@@ -100,7 +100,7 @@ makeCalendarAPICall({
 })
 
 //
-// SLACK RTM chat bot
+/////////////////////// SLACK RTM chat bot///////////////////////////////////////
 //
 
 const token = process.env.SLACK_TOKEN
@@ -118,7 +118,7 @@ rtm.on('message', function (event) {
   //  console.log(err, res);
   //})
   if (event.bot_id) return
-  
+
   web.chat.postMessage({
     channel: event.channel,
     as_user: true,
@@ -194,7 +194,7 @@ app.post('/slack', (req, res) => {
 })
 
 app.listen(1337)
-//
+//////////////////////////////////DIALOG FLOW /////////////////////////////////////
 // const sessionId = 'demi-chat-1';
 // const dialogflow = require('dialogflow');
 // const sessionClient = new dialogflow.SessionsClient();
