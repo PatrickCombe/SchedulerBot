@@ -114,58 +114,100 @@ rtm.start();
 
 // Log all incoming messages
 rtm.on('message', (event) => {
-  //console.log(event)
-  const conversationId = 'DBWEK8RQF';
+  console.log(event)
+  const conversationId = event.channel;
   if (event.bot_id){
     return;
   }
-  if (event.text.search("remind")!== -1) {
-    var length = event.text.length;
-    var index = event.text.search('remind');
-    var newString = event.text.slice(index + 9, length)
-    //var newA = event.text.splice(index)
-    web.chat.postMessage({
-      channel: conversationId,
-      as_user: true,
-      text: 'Task',
-      attachments: [
-        {
-          "text": "Create a task" + newString,
-          "fallback": "Shame... buttons aren't supported in this land",
-          "callback_id": "button_tutorial",
-          "color": "#3AA3E3",
-          "attachment_type": "default",
-          "actions": [
+  const projectId = process.env.DIALOGFLOW_PROJECT_ID; //https://dialogflow.com/docs/agents#settings
+  // create a new session for a new user that converses with the bot
+  const sessionId = event.user;
+  const query = event.text;
+  const languageCode = 'en-US';
+
+  // Instantiate a DialogFlow client.
+  const dialogflow = require('dialogflow');
+  const sessionClient = new dialogflow.SessionsClient();
+
+  // Define session path
+  const sessionPath = sessionClient.sessionPath(projectId, sessionId);
+  const request = {
+    session: sessionPath,
+    queryInput: {
+      text: {
+        text: event.text,
+        languageCode: languageCode,
+      },
+    },
+  };
+
+
+  // Send request and log result
+  sessionClient
+    .detectIntent(request)
+    .then(responses => {
+      console.log('Detected intent'); // Detected intent
+      const result = responses[0].queryResult;
+      console.log("result", result)
+      console.log(`  Query: ${result.queryText}`); // Query: hello
+      console.log(`  Response: ${result.fulfillmentText}`);  // Response: Hello! How can I help you?
+      if (result.queryText.search("remind")!== -1) {
+        var length = result.queryText.length;
+        var index = result.queryText.search('remind');
+        var newString = result.queryText.slice(index + 9, length)
+        //var newA = event.text.splice(index)
+        web.chat.postMessage({
+          channel: conversationId,
+          as_user: true,
+          text: 'Task',
+          attachments: [
             {
-              "name": "Yes",
-              "text": "Yes",
-              "type": "button",
-              "value": "yes"
-            },
-            {
-              "name": "No",
-              "text": "No",
-              "type": "button",
-              "value": "no"
-            },
-            {
-              "name": "Maybe",
-              "text": "Maybe",
-              "type": "button",
-              "value": "maybe",
-              "style": "danger"
+              "text": "Create a task" + newString,
+              "fallback": "Shame... buttons aren't supported in this land",
+              "callback_id": "button_tutorial",
+              "color": "#3AA3E3",
+              "attachment_type": "default",
+              "actions": [
+                {
+                  "name": "Yes",
+                  "text": "Yes",
+                  "type": "button",
+                  "value": "yes"
+                },
+                {
+                  "name": "No",
+                  "text": "No",
+                  "type": "button",
+                  "value": "no"
+                },
+                {
+                  "name": "Maybe",
+                  "text": "Maybe",
+                  "type": "button",
+                  "value": "maybe",
+                  "style": "danger"
+                }
+              ]
             }
           ]
-        }
-      ]
+        })
+        .then((res) => {
+          console.log("Sent", res)
+        })
+        .catch((err) => {
+          console.log("error", err)
+        })
+      }
+      rtm.sendMessage(result.fulfillmentText, conversationId)
+      if (result.intent) {
+        console.log(`  Intent: ${result.intent.displayName}`); // Intent: Default Welcome intent
+      } else {
+        console.log(`  No intent matched.`);
+      }
     })
-    .then((res) => {
-      console.log("Sent", res)
-    })
-    .catch((err) => {
-      console.log("error", err)
-    })
-  }
+    .catch(err => {
+      console.error('ERROR:', err);
+    });
 })
 
 // Log all reactions
@@ -186,7 +228,10 @@ rtm.on('ready', (event) => {
   //
   //console.log("event", event)
   const conversationId = 'DBWEK8RQF';
-  rtm.sendMessage('Wus gucci son', conversationId);
+  rtm.sendMessage(`Hey. I'm Scheduler Bot, our team's scheduling assistant. It's nice to be here to help you beautiful people out.
+  I can create reminders: remind me to do laundry tomorrow. To do a really good job, I need your permission to access your calendar,
+  I won't be sharing information with others. I just need to check when you're busy or free to meet. Please
+  sign up with this link to connect your calendars: --insert link here--`, conversationId);
 });
 
 app.post('/slack', (req, res) => {
@@ -196,45 +241,3 @@ app.post('/slack', (req, res) => {
 })
 
 app.listen(1337);
-
-const projectId = process.env.DIALOGFLOW_PROJECT_ID; //https://dialogflow.com/docs/agents#settings
-const sessionId = 'quickstart-session-id';
-const query = 'hello';
-const languageCode = 'en-US';
-
-// Instantiate a DialogFlow client.
-const dialogflow = require('dialogflow');
-const sessionClient = new dialogflow.SessionsClient();
-
-// Define session path
-const sessionPath = sessionClient.sessionPath(projectId, sessionId);
-
-// The text query request.
-const request = {
-  session: sessionPath,
-  queryInput: {
-    text: {
-      text: query,
-      languageCode: languageCode,
-    },
-  },
-};
-
-// Send request and log result
-sessionClient
-  .detectIntent(request)
-  .then(responses => {
-    console.log('Detected intent'); // Detected intent
-    const result = responses[0].queryResult;
-    console.log("result", result)
-    console.log(`  Query: ${result.queryText}`); // Query: hello
-    console.log(`  Response: ${result.fulfillmentText}`);  // Response: Hello! How can I help you?
-    if (result.intent) {
-      console.log(`  Intent: ${result.intent.displayName}`); // Intent: Default Welcome intent
-    } else {
-      console.log(`  No intent matched.`);
-    }
-  })
-  .catch(err => {
-    console.error('ERROR:', err);
-  });
