@@ -62,45 +62,52 @@ if (event.bot_id || !event.user) return;
           'text': 'You are already verified! Thanks! :)'
         })
       }
+
     })
   }
-let botResponse = await interpret(event.user, event.text);
-console.log("bot response: ", botResponse);
-if (!botResponse.allReqiredParamsPresent) {
-  rtm.sendMessage(botResponse.fulfillmentText, event.channel)
-  .catch(console.error)
-} else {
-  const {invitee, day, time} = botResponse.parameters.fields;
-  let person = invitee.listValue.values[0];
-  let text = `Confirm your meeting with ${person.stringValue}, on ${new Date(day.stringValue).toDateString()}`;
-  const data = {person: person.stringValue, date: new Date(day.stringValue), time: new Date(time.stringValue), summar: text}
-  web.chat.postMessage({
-    channel: event.channel,
-    text: 'Meeting Details',
-    attachments: [
-      {
-        "text": text,
-        "actions": [
+  else if (event.text !== 'verify') {
+    let botResponse = await interpret(event.user, event.text);
+    console.log("bot response: ", botResponse);
+    if (!botResponse.allRequiredParamsPresent) {
+      console.log('date: ', botResponse.parameters.fields.date)
+        console.log('Subject: ', botResponse.parameters.fields.Subject)
+      rtm.sendMessage(botResponse.fulfillmentText, event.channel)
+      .catch(console.error)
+    } else {
+      const {date, Subject} = botResponse.parameters.fields;
+      console.log('date: ',date);
+      console.log('Subject: ' , Subject)
+      console.log("AS;LKDFJAS;LKDJ", botResponse.parameters.fields)
+      let text = `Confirm your task to ${Subject.stringValue} ${date.stringValue}`;
+      const data =  {day: new Date(date.stringValue), subject: Subject.stringValue, summary: text}
+      web.chat.postMessage({
+        channel: event.channel,
+        text: 'Meeting Details',
+        attachments: [
           {
-            "name": "Confirm",
-            "text": "Confirm",
-            "type": "button",
-            "value": JSON.stringify(data)
-          },
-          {
-            "name": "Cancel",
-            "text": "Cancel",
-            "type": "button",
-            "value": "false"
+            "text": text,
+            "callback_id": "confirm task",
+            "actions": [
+              {
+                "name": "Confirm",
+                "text": "Confirm",
+                "type": "button",
+                "value": JSON.stringify(data)
+              },
+              {
+                "name": "Cancel",
+                "text": "Cancel",
+                "type": "button",
+                "value": "false"
+              }
+            ]
           }
         ]
-      }
-    ]
-  })
-  .then((res) => {
-    console.log('Message sent: ', res.ts)
-  })
-  .catch(console.error)
-}
-
+      })
+      .then((res) => {
+        console.log('Message sent: ', res.ts)
+      })
+      .catch(console.error)
+    }
+  }
 })
