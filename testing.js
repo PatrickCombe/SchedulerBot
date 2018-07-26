@@ -15,15 +15,17 @@ app.use(bodyParser.urlencoded({ extended: false }))
 app.use(bodyParser.json())
 
 app.post('/slack', function(req,res) {
+  console.log("HEYO", req.body)
   let payload = JSON.parse(req.body.payload)
   let user = payload.user.id;
   let data = JSON.parse(payload.actions[0].value)
-  User.findOne({slackId: user})
-  .then((u) => {
-    createEvent(u.googleTokens, data)
+  models.User.findOne({slackId: user})
+  .then((user) => {
+    console.log('PAYLOAD',payload)
+    createEvent({access_token: user.google.accessToken, refresh_token:user.google.refreshToken }, data)
   })
 
-  res.send('OKAY')
+  res.send('Your reminder has been confirmed')
 
 })
 

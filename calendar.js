@@ -39,13 +39,12 @@ export function createEvent(token, data) {
   let client = getClient();
   client.setCredentials(token);
   const calendar = google.calendar({version: 'v3', auth: client});
-
-  let start = new Date(data.date)
-  let time = new Date(data.time)
-  start.setHours(time.getHours());
-  start.setMinutes(time.getMinutes());
-
-  calendar.event.insert({
+  console.log(data)
+  let start = new Date(data.day)
+  console.log(start)
+  // start.setHours(time.getHours());
+  // start.setMinutes(time.getMinutes());
+  calendar.events.insert({
     calendarId: 'primary',
     resource: {
       summary: data.summary,
@@ -53,7 +52,7 @@ export function createEvent(token, data) {
         dateTime: start.toISOString()
       },
       end: {
-        dateTime: new Date(start.getTime() + 1800000).toISOString()
+        dateTime: new Date(start+ 60000)
       }
     }
   })
